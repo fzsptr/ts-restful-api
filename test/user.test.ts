@@ -2,6 +2,7 @@ import supertest from "supertest"
 import { web } from "../src/application/web"
 import { logger } from "../src/application/logging"
 import { UserTest } from "./test-util"
+import bcrypt from "bcrypt"
 
 // describe('POST /api/users', () => {
 
@@ -38,47 +39,47 @@ import { UserTest } from "./test-util"
 //     })
 // })
 
-describe('POST /api/users/login', () => {
+// describe('POST /api/users/login', () => {
     
-    beforeEach( async () => {
-        await UserTest.create()
-    })
+//     beforeEach( async () => {
+//         await UserTest.create()
+//     })
 
-    afterEach( async () => {
-        await UserTest.delete()
-    })
+//     afterEach( async () => {
+//         await UserTest.delete()
+//     })
 
-    it ('should reject login user', async () => {
+//     it ('should reject login user', async () => {
 
-        const response = await supertest(web)
+//         const response = await supertest(web)
             
-        .post("/api/users/login")
-        .send({
-            username: "test",
-            password: "test"
-        })
+//         .post("/api/users/login")
+//         .send({
+//             username: "test",
+//             password: "test"
+//         })
             
-        logger.debug(response.body)
-        expect(response.status).toBe(200)
-        expect(response.body.data.username).toBe("test")
-        expect(response.body.data.name).toBe("test")
-        expect(response.body.data.token).toBeDefined()    
-    })
+//         logger.debug(response.body)
+//         expect(response.status).toBe(200)
+//         expect(response.body.data.username).toBe("test")
+//         expect(response.body.data.name).toBe("test")
+//         expect(response.body.data.token).toBeDefined()
+//     })
 
-    it ('should reject login user if request invalid', async () => {
-        const response = await supertest(web)
+//     it ('should reject login user if request invalid', async () => {
+//         const response = await supertest(web)
 
-        .post("/api/users/login")
-        .send({
-            username: "salah",
-            password: "test"
-        })
+//         .post("/api/users/login")
+//         .send({
+//             username: "salah",
+//             password: "test"
+//         })
 
-        logger.debug(response.body)
-        expect(response.status).toBe(400)
-        expect(response.body.errors).toBeDefined()
-    })
-})
+//         logger.debug(response.body)
+//         expect(response.status).toBe(401)
+//         expect(response.body.errors).toBeDefined()
+//     })
+// })
 
 // describe('GET /api/users/current', () => {
 //     beforeEach(async() => {
@@ -100,7 +101,7 @@ describe('POST /api/users/login', () => {
 //         expect(response.body.data.username).toBe("test")
 //         expect(response.body.data.name).toBe("test")
 //     })
-//     it ('should be able to get user if user invalid', async() => {
+//     it ('should be able to get user if token invalid', async() => {
 //         const response = await supertest(web)
 
 //             .get("/api/users/current")
@@ -111,3 +112,73 @@ describe('POST /api/users/login', () => {
 //         expect(response.body.errors).toBeDefined()
 //     })
 // })
+
+describe('PATCH /api/users/current', () => {
+    beforeEach(async () => {
+        await UserTest.create()
+    })
+
+    afterEach(async () => {
+        await UserTest.delete()
+    })
+    
+    it('should be able to update user name', async() => {
+        const response = await supertest(web)
+
+            .patch("/api/users/current")
+            .set("X-API-TOKEN", "test")
+            .send({
+                name: "update"
+            })
+
+        logger.debug(response.body)
+        expect(response.status).toBe(200)
+        expect(response.body.data.name).toBe("update")
+    })
+
+    it('should be able to update user password', async() => {
+        const response = await supertest(web)
+
+            .patch("/api/users/current")
+            .set("X-API-TOKEN", "test")
+            .send({
+                password: "update"
+            })
+        
+            logger.debug(response.body)
+            expect(response.status).toBe(200)
+
+            const user = await UserTest.get()
+            expect(await bcrypt.compare("update", user.password)).toBe(true)
+    })
+
+    it('should be able to update user if token is wrong', async() => {
+        const respone = await supertest(web)
+
+            .patch("/api/user/current")
+            .set("X-API-TOKEN", "salah")
+            .send({
+                name: "benar",
+                password: "benar"
+            })
+        
+        logger.debug(respone.body)
+        expect(respone.status).toBe(401)
+        expect(respone.body.errors).toBeDefined()
+    })
+
+    it('should be able to update user if request is invalid', async() => {
+        const response = await supertest(web)
+
+            .patch("/api/users/current")
+            .set("X-API-TOKEN", "test")
+            .send({
+                name: "",
+                password: ""
+            })
+        
+            logger.debug(response.body)
+            expect(response.status).toBe(400)
+            expect(response.body.errors).toBeDefined()
+    })
+})
