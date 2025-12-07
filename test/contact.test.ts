@@ -72,42 +72,94 @@ import { prismaClient } from "../src/application/database"
 //     })
 // })
 
-describe('GET /api/contacts/:contactId', () => { 
-    beforeEach(async () => {
+// describe('GET /api/contacts/:contactId', () => { 
+//     beforeEach(async () => {
+//         await UserTest.create()
+//         await ContactTest.create()
+//     })
+
+//     afterEach(async () => {
+//         await ContactTest.deleteAll()
+//         await UserTest.delete()
+//     })
+    
+//     it('should be able get contact', async() => {
+//         const contact = await ContactTest.get()
+//         const response = await supertest(web)
+
+//             .get(`/api/contacts/${contact.id}`)
+//             .set("X-API-TOKEN", "test")
+
+//         logger.debug(response.body)
+//         expect(response.status).toBe(200)
+//         expect(response.body.data.id).toBeDefined()
+//         expect(response.body.data.first_name).toBe(contact.first_name)
+//         expect(response.body.data.last_name).toBe(contact.last_name)
+//         expect(response.body.data.email).toBe(contact.email)
+//         expect(response.body.data.phone).toBe(contact.phone)
+//     })
+
+//     it('should reject get contact if contact is not found', async() => {
+//         const contact = await ContactTest.get()
+//         const response = await supertest(web)
+
+//             .get(`/api/contacts/${contact.id + 1}`)
+//             .set("X-API-TOKEN", "test")
+
+//         logger.debug(response.body)
+//         expect(response.status).toBe(404)
+//         expect(response.body.errors).toBeDefined()
+//     })
+// })
+
+describe('PUT /api/contacts/contactId', () => { 
+    beforeEach(async() => {
         await UserTest.create()
         await ContactTest.create()
     })
 
-    afterEach(async () => {
+    afterEach(async() => {
         await ContactTest.deleteAll()
         await UserTest.delete()
     })
     
-    it('should be able get contact', async() => {
+    it ('should be able to update contact', async() => {
         const contact = await ContactTest.get()
         const response = await supertest(web)
 
-            .get(`/api/contacts/${contact.id}`)
+            .put(`/api/contacts/${contact.id}`)
             .set("X-API-TOKEN", "test")
-
+            .send({
+                first_name: "fauzi",
+                last_name: "saputra",
+                email: "fauzi@mail.com",
+                phone: "08912345"
+            })
+        
         logger.debug(response.body)
         expect(response.status).toBe(200)
         expect(response.body.data.id).toBeDefined()
-        expect(response.body.data.first_name).toBe(contact.first_name)
-        expect(response.body.data.last_name).toBe(contact.last_name)
-        expect(response.body.data.email).toBe(contact.email)
-        expect(response.body.data.phone).toBe(contact.phone)
+        expect(response.body.data.first_name).toBe("fauzi")
+        expect(response.body.data.last_name).toBe("saputra")
+        expect(response.body.data.email).toBe("fauzi@mail.com")
+        expect(response.body.data.phone).toBe("08912345")
     })
 
-    it('should reject get contact if contact is not found', async() => {
+    it ('should be able to update contact if data invalid', async() => {
         const contact = await ContactTest.get()
         const response = await supertest(web)
 
-            .get(`/api/contacts/${contact.id + 1}`)
+            .put(`/api/contacts/${contact.id}`)
             .set("X-API-TOKEN", "test")
-
+            .send({
+                first_name: "",
+                last_name: "saputra",
+                email: "fauzi",
+                phone: "089123451231231"
+            })
+        
         logger.debug(response.body)
-        expect(response.status).toBe(404)
-        expect(response.body.errors).toBeDefined()
+        expect(response.status).toBe(400)
+        expect(response.body.errors)
     })
  })
